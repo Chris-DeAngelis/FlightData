@@ -1,0 +1,50 @@
+---
+title: "Flight Documentation"
+author: "Chris DeAngelis, CFA"
+date: "October 1, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+#library(RJDBC)
+#library(RPostgreSQL) # Backend to Amazon Redshift
+#library(DBI)
+library(dplyr)
+library(dbplyr)
+library(odbc) # Connects to database via open database connectivity protocol
+library(magrittr) # For piping
+library(tidyverse)
+
+# details
+db <- "jdbc:redshift://pointb-rs.cnabkgbxqmuz.us-west-2.redshift.amazonaws.com:5439/dev"
+uid <- "a201922"
+pwd <- "RobertdeLaSalle1679"
+port <- "5439"
+
+# Setup
+#driver <- JDBC("com.amazon.redshift.jdbc42.Driver","C:/Users/chrisd/Desktop/R/Flight Data/Flight Data/RedshiftJDBC42-1.2.1.1001.jar", identifier.quote="`")
+
+con <- dbConnect(odbc(), 
+                 Driver = "Amazon Redshift (x64)", 
+                 Server = "pointb-rs.cnabkgbxqmuz.us-west-2.redshift.amazonaws.com;Database=dev", 
+                 Database = "dev", 
+                 Trusted_Connection = "True",
+                 uid = uid,
+                 pwd = pwd,
+                 port = port)
+
+```
+
+
+```{r exploratory}
+ontime_raw <- tbl(con, in_schema("analyst", "ontime")) 
+
+flight_dimensions <- ontime_raw %>% 
+                      select("year", "carrier") %>%
+                      group_by(year, carrier) %>%
+                      summarize(flights = n()) %>%
+                      arrange(year, carrier) %>%
+                      as.data.frame() %>%
+                      spread(year, flights)
+
+```
